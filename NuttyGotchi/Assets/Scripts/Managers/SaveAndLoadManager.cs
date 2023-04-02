@@ -15,7 +15,7 @@ namespace Managers {
 		private NuttyStats stats;
 
 		//questo metodo ritorna il percorso del file
-		public string GetDataPath() {
+		private static string GetDataPath() {
 			
 			//e per farlo usiamo Path.Combine che ci permette di combinare due percorsi
 			//il primo che andremo a prendere che rappresenta un diverso percorso in base alla piattaformo su cui andiamo a scrivere.
@@ -24,7 +24,7 @@ namespace Managers {
 		}
 
 		//questa funzione ci permetterà di sapere se il file è presente o no sul disco
-		public bool needFirstSave() 
+		public bool NeedFirstSave() 
 		{
 			//se non è presente, salviamo.
 			return !File.Exists(GetDataPath());
@@ -39,14 +39,14 @@ namespace Managers {
 		public NuttyStats FirstSave() {
 			 
 			//creazione stats di Nutty
-			if (needFirstSave()) {
+			if (NeedFirstSave()) {
 				//dato che è la prima volta che le prendiamo possiamo porre tutte le stats a DataTime.Now
 				//e attraverso il metodo di TimeUtils le convertiamo in ulong
-				NuttyStats stats = new NuttyStats(
-					TimeUtils.uLongFromDateTime(DateTime.Now),
-					TimeUtils.uLongFromDateTime(DateTime.Now),
-					TimeUtils.uLongFromDateTime(DateTime.Now),
-					TimeUtils.uLongFromDateTime(DateTime.Now)
+				NuttyStats nuttyStats = new NuttyStats(
+					TimeUtils.ULongFromDateTime(DateTime.Now),
+					TimeUtils.ULongFromDateTime(DateTime.Now),
+					TimeUtils.ULongFromDateTime(DateTime.Now),
+					TimeUtils.ULongFromDateTime(DateTime.Now)
 				);
 
 				//per salvare si utilizza l'oggetto BinaryFormatter
@@ -57,32 +57,32 @@ namespace Managers {
 				
 				//e utilizzare il metodo Serialize sul file appena creato
 				//il primo è il file creato e il secondo la struttura dati creata poco prima da inserire
-				binaryFormatter.Serialize(fileStream, stats);
+				binaryFormatter.Serialize(fileStream, nuttyStats);
 				
 				//importante da ricordarsi il .Close()
 				fileStream.Close();
 
-				return stats;
+				return nuttyStats;
 			}
 			return null; 
 		}
 		
 		//Creazione metodo dei salvataggi normali
 		//passiamo come paramentro le stats da sovrascrivere
-		public void Save(NuttyStats stats) {
+		public void Save(NuttyStats nuttyStats) {
 			
 			//sarà come la funzione di prima con l'unica differenza che non dovremmo creare una nuova struct di dati
 			//ma utilizzeremo quella passataci come parametro
-			if (!needFirstSave()) {
+			if (!NeedFirstSave()) {
 				BinaryFormatter binaryFormatter = new BinaryFormatter();
 				FileStream fileStream = File.Create(GetDataPath());
-				binaryFormatter.Serialize(fileStream, stats);
+				binaryFormatter.Serialize(fileStream, nuttyStats);
 				fileStream.Close();
 			}
 		}
 
 		public NuttyStats Load() {
-			if (!needFirstSave()) {
+			if (!NeedFirstSave()) {
 				BinaryFormatter binaryFormatter = new BinaryFormatter();
 				FileStream fileStream = File.Open(GetDataPath(), FileMode.Open);
 				

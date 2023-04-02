@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Utils;
+using Random = UnityEngine.Random;
 
 namespace Managers {
 
@@ -13,6 +15,14 @@ namespace Managers {
 		public GameObject sleepButton;
 		public GameObject playButton;
 		public GameObject wakeUpButton;
+
+		public GameObject sleepPanel;
+
+		public TextMesh calendar;
+
+		public GameObject wall;
+		[FormerlySerializedAs("material")] public Material wallMaterial;
+		public Light directionalLight;
 
 		public enum Status {
 			Well,
@@ -39,40 +49,44 @@ namespace Managers {
 
 		//load the stats, if there are yet in memory or create new ones with the relative event
 		public void Load() {
-			if (SaveAndLoadManager.Instance.needFirstSave()) {
+			if (SaveAndLoadManager.Instance.NeedFirstSave()) {
 				stats = SaveAndLoadManager.Instance.FirstSave();
 				if (FirstStart != null) {
 					FirstStart();
 				}
-				else {
-					stats = SaveAndLoadManager.Instance.Load(); //check if is good, if isn't change name Load in SaveAndLoad
-				}
 			}
+			else {
+				stats = SaveAndLoadManager.Instance.Load(); //check if is good, if isn't change name Load in SaveAndLoad
+			}
+			
 			
 		}
 
 		//check the stats
+		[Obsolete("Obsolete")]
 		public Status CheckForStats() {
 			DateTime now = DateTime.Now;
 
-			DateTime lastMeal = TimeUtils.dateTimeFromULongInLocalTime(stats.lastMeal);
-			DateTime lastSleep = TimeUtils.dateTimeFromULongInLocalTime(stats.lastSleep);
-			DateTime lastGame = TimeUtils.dateTimeFromULongInLocalTime(stats.lastPlay);
+			DateTime birthday = TimeUtils.DateTimeFromULongInLocalTime(stats.birthDay);
+			DateTime lastMeal = TimeUtils.DateTimeFromULongInLocalTime(stats.lastMeal);
+			DateTime lastSleep = TimeUtils.DateTimeFromULongInLocalTime(stats.lastSleep);
+			DateTime lastGame = TimeUtils.DateTimeFromULongInLocalTime(stats.lastPlay);
 			
 			//compare all stats saved with the actual time
 			//for any interval of time get it,compare with the relative variables
-			int elapsedSinceLastMeal = TimeUtils.differenceInMinutes(lastMeal, now);
-			int elapsedSinceLastSleep = TimeUtils.differenceInMinutes(lastSleep, now);
-			int elapsedSinceLastGame = TimeUtils.differenceInMinutes(lastGame, now);
+			int days = TimeUtils.DifferenceInDays(birthday, now);
+			calendar.text = days.ToString();
+			
+			int elapsedSinceLastMeal = TimeUtils.DifferenceInMinutes(lastMeal, now);
+			int elapsedSinceLastSleep = TimeUtils.DifferenceInMinutes(lastSleep, now);
+			int elapsedSinceLastGame = TimeUtils.DifferenceInMinutes(lastGame, now);
 
 			if (elapsedSinceLastSleep > Constants.MAX_TIME_FROM_LAST_SLEEP) {
 				return elapsedSinceLastSleep > Constants.MAX_TIME_BEFORE_DIE ? Status.Death : Status.Tired;
 			}
 			
 			if (elapsedSinceLastMeal > Constants.MAX_TIME_FROM_LAST_MEAL) {
-				print("ciao");
 				return elapsedSinceLastMeal > Constants.MAX_TIME_BEFORE_DIE ? Status.Death : Status.Hungry;
-				
 			}
 			
 			if (elapsedSinceLastGame > Constants.MAX_TIME_FROM_LAST_GAME) {
@@ -90,32 +104,36 @@ namespace Managers {
 		}
 
 		public void FeedNutty() {
-			stats.lastMeal = TimeUtils.uLongFromDateTime(DateTime.Now);
+			stats.lastMeal = TimeUtils.ULongFromDateTime(DateTime.Now);
 			SaveAndLoadManager.Instance.Save(stats);
 
 			Feed?.Invoke();
 		}
 		
 		public void PlayNutty() {
-			stats.lastPlay = TimeUtils.uLongFromDateTime(DateTime.Now);
+			stats.lastPlay = TimeUtils.ULongFromDateTime(DateTime.Now);
 			SaveAndLoadManager.Instance.Save(stats);
 
+			StartCoroutine(WallMaterialRandom(2f));
 			Play?.Invoke();
 		}
 		
 		public void SleepNutty() {
-			stats.lastSleep = TimeUtils.uLongFromDateTime(DateTime.Now);
+			stats.lastSleep = TimeUtils.ULongFromDateTime(DateTime.Now);
 			SaveAndLoadManager.Instance.Save(stats);
 
 			eatButton.SetActive(false);
 			playButton.SetActive(false);
 			sleepButton.SetActive(false);
-			
+
 			wakeUpButton.SetActive(true);
+
+			directionalLight.enabled = false;
+			wall.SetActive(true);
+			wallMaterial.color = Color.black;
+			StartCoroutine(WaitForSleep());
 			
-			if (Sleep != null) {
-				Sleep();
-			}
+			Sleep?.Invoke();
 		}
 		
 		public void WakeUpNutty() {
@@ -125,6 +143,11 @@ namespace Managers {
 			sleepButton.SetActive(true);
 			
 			wakeUpButton.SetActive(false);
+			
+			directionalLight.enabled = true;
+			wall.SetActive(false);
+			sleepPanel.SetActive(false);
+
 			WakeUp?.Invoke();
 		}
 
@@ -151,6 +174,25 @@ namespace Managers {
 			}
 			
 			gameOverPanel.SetActive(false);
+		}
+		
+		private IEnumerator WaitForSleep() {
+			yield return new WaitForSeconds(2f);
+			sleepPanel.SetActive(true);
+		}
+
+		private IEnumerator WallMaterialRandom(float maxTime) {
+			wallMaterial.color = Random.ColorHSV(0, 1, 1, 1, 0.5f, 1);
+			wall.SetActive(true);
+
+			float elapsedTime = 0;
+			while (elapsedTime <= maxTime) {
+				wallMaterial.color = Random.ColorHSV(0, 1, 1, 1, 0.5f, 1);
+				elapsedTime += Time.deltaTime;
+				yield return null;
+			}
+			
+			wall.SetActive(false);
 		}
 	}
 

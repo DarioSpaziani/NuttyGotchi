@@ -6,15 +6,20 @@ public class NuttyController : MonoBehaviour
 {
 	public GameObject welcomePanel;
 
+	public Baloon baloon;
+
+	public Animator animator;
+
 	private NuttyManager.Status status = NuttyManager.Status.Well;
 
 	private CanvasGroup welcomeCanvasGroup;
 
 	private void NiceToMeetYou() {
+		animator.SetBool("isDead", true);
 		welcomeCanvasGroup = welcomePanel.GetComponent<CanvasGroup>();
 		StartCoroutine(FadeInOutPanel(0.01f));
 
-		CheckForEvents();
+		CheckForEvent();
 	}
 	
 	private IEnumerator FadeInOutPanel(float step) {
@@ -27,16 +32,21 @@ public class NuttyController : MonoBehaviour
 
 		yield return new WaitForSeconds(3f);
 
-		if (welcomeCanvasGroup.alpha > 0) {
+		while (welcomeCanvasGroup.alpha > 0) {
 			yield return null;
 			welcomeCanvasGroup.alpha -= step;
 		}
 
 		welcomePanel.SetActive(false);
 	}
+
+	private IEnumerator LateCheckForEvent() {
+		yield return new WaitForSeconds(5f);
+		CheckForEvent();
+	}
 	
 	// ReSharper disable Unity.PerformanceAnalysis
-	private void CheckForEvents() {
+	private void CheckForEvent() {
 		if (status != NuttyManager.Status.Sleeping) {
 			status = NuttyManager.Instance.CheckForStats();
 
@@ -48,43 +58,57 @@ public class NuttyController : MonoBehaviour
 					DeadNutty();
 					break;
 				default:
-					print("sad nutty!");
+					animator.SetBool("isSad", true);
+					baloon.Show(status);
 					break;
 			}
 		}
 	}
 	
-	private static void WellNutty() {
-		print("Well!");
+	private void WellNutty() {
+		animator.SetBool("isSad", false);
 	}
 	
-	private static void DeadNutty() {
+	private void DeadNutty() {
+		animator.SetBool("isDead", true);
 		NuttyManager.Instance.GameOver(); 
+		
 	}
 	
 	//4 placeholder
 	private void FeedAction() {
-		print("Feed");
+		animator.SetBool("isSad", false);
+		animator.SetTrigger("Eat");
+		baloon.Hide();
+		StartCoroutine(LateCheckForEvent());
 	}
 	
 	private void PlayAction() {
-		print("Play");
+		animator.SetBool("isSad", false);
+		animator.SetTrigger("Play");
+		baloon.Hide();
+		StartCoroutine(LateCheckForEvent());
 	}
 	
 	private void SleepAction() {
-		print("Sleep");
+		animator.SetBool("isSad", false);
+		status = NuttyManager.Status.Sleeping;
+		animator.SetBool("isSleeping", true);
+		baloon.Hide();
 	}
 	
 	private void WakeUpAction() {
-		print("WakeUp");
+		status = NuttyManager.Status.Well;
+		animator.SetBool("isSleeping", false);
+		StartCoroutine(LateCheckForEvent()); 
 	}
 	
 	private void Start() {
 		NuttyManager.Instance.FirstStart += NiceToMeetYou;
 		
 		NuttyManager.Instance.Load();
-		CheckForEvents();
-		TimeManager.Instance.ClockTick += CheckForEvents;
+		CheckForEvent();
+		TimeManager.Instance.ClockTick += CheckForEvent;
 
 		NuttyManager.Instance.Feed += FeedAction;
 		NuttyManager.Instance.Sleep += SleepAction;
@@ -94,7 +118,7 @@ public class NuttyController : MonoBehaviour
 	
 	private void OnDestroy() {
 		if (TimeManager.Instance != null) {
-			TimeManager.Instance.ClockTick -= CheckForEvents;
+			TimeManager.Instance.ClockTick -= CheckForEvent;
 		}
 		
 		if (NuttyManager.Instance != null) {

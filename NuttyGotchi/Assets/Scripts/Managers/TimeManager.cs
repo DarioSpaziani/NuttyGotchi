@@ -25,13 +25,12 @@ public class TimeManager : Singleton<TimeManager> {
     }
     
     //dato che è per mobile bisogna tenere traccia di quando il giocatore metterà in pausa l'app
-
     private void OnApplicationPause(bool pause) {
         if (pause) {
             lastTimeDetected = DateTime.Now;
         }
         else {
-            elapsedTime += TimeUtils.differenceInSeconds(lastTimeDetected, DateTime.Now);
+            elapsedTime += TimeUtils.DifferenceInSeconds(lastTimeDetected, DateTime.Now);
         }
     }
 }
