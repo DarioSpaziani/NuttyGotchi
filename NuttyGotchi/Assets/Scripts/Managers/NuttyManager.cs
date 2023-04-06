@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
+using System.Net.Mime;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UIElements;
 using Utils;
 using Random = UnityEngine.Random;
 
@@ -15,6 +17,7 @@ namespace Managers {
 		public GameObject sleepButton;
 		public GameObject playButton;
 		public GameObject wakeUpButton;
+		public GameObject sliderActions;
 
 		public GameObject sleepPanel;
 
@@ -143,12 +146,16 @@ namespace Managers {
 			eatButton.SetActive(false);
 			playButton.SetActive(false);
 			sleepButton.SetActive(false);
+			
 
 			wakeUpButton.SetActive(true);
 
 			directionalLight.enabled = false;
 			wall.SetActive(true);
 			wallMaterial.color = Color.black;
+			
+			sliderActions.SetActive(false);
+			
 			StartCoroutine(WaitForSleep());
 			
 			Sleep?.Invoke();
@@ -165,6 +172,8 @@ namespace Managers {
 			directionalLight.enabled = true;
 			wall.SetActive(false);
 			sleepPanel.SetActive(false);
+			
+			sliderActions.SetActive(true);
 
 			WakeUp?.Invoke();
 		}
