@@ -20,6 +20,10 @@ namespace Managers {
 
 		public TextMesh calendar;
 
+		public int elapsedSinceLastMeal;
+		public int elapsedSinceLastSleep;
+		public int elapsedSinceLastGame;
+
 		public GameObject wall;
 		[FormerlySerializedAs("material")] public Material wallMaterial;
 		public Light directionalLight;
@@ -47,6 +51,20 @@ namespace Managers {
 		//it is a component built in framework of unity, work for the fade in and fade out of the panel
 		private CanvasGroup gameOverCanvasGroup;
 
+		private void Awake() {
+			elapsedSinceLastMeal = 0;
+			elapsedSinceLastSleep = 0;
+			elapsedSinceLastGame = 0;
+		}
+
+		private void Start() {
+			print("meal stats printed in Start : " + elapsedSinceLastMeal);
+		}
+
+		private void Update() {
+			
+		}
+
 		//load the stats, if there are yet in memory or create new ones with the relative event
 		public void Load() {
 			if (SaveAndLoadManager.Instance.NeedFirstSave()) {
@@ -58,10 +76,14 @@ namespace Managers {
 			else {
 				stats = SaveAndLoadManager.Instance.Load(); //check if is good, if isn't change name Load in SaveAndLoad
 			}
-			
-			
 		}
-
+		
+		private void RestartGame() {
+			SaveAndLoadManager.Instance.RemoveSave();
+			stats = SaveAndLoadManager.Instance.FirstSave();
+			FirstStart?.Invoke();
+		}
+		
 		//check the stats
 		[Obsolete("Obsolete")]
 		public Status CheckForStats() {
@@ -77,9 +99,9 @@ namespace Managers {
 			int days = TimeUtils.DifferenceInDays(birthday, now);
 			calendar.text = days.ToString();
 			
-			int elapsedSinceLastMeal = TimeUtils.DifferenceInMinutes(lastMeal, now);
-			int elapsedSinceLastSleep = TimeUtils.DifferenceInMinutes(lastSleep, now);
-			int elapsedSinceLastGame = TimeUtils.DifferenceInMinutes(lastGame, now);
+			elapsedSinceLastMeal = TimeUtils.DifferenceInMinutes(lastMeal, now);
+			elapsedSinceLastSleep = TimeUtils.DifferenceInMinutes(lastSleep, now);
+			elapsedSinceLastGame = TimeUtils.DifferenceInMinutes(lastGame, now);
 
 			if (elapsedSinceLastSleep > Constants.MAX_TIME_FROM_LAST_SLEEP) {
 				return elapsedSinceLastSleep > Constants.MAX_TIME_BEFORE_DIE ? Status.Death : Status.Tired;
@@ -95,13 +117,9 @@ namespace Managers {
 
 			return Status.Well;
 		}
-
-		// ReSharper disable Unity.PerformanceAnalysis
-		private void RestartGame() {
-			SaveAndLoadManager.Instance.RemoveSave();
-			stats = SaveAndLoadManager.Instance.FirstSave();
-			FirstStart?.Invoke();
-		}
+		
+		
+		#region NuttyAction
 
 		public void FeedNutty() {
 			stats.lastMeal = TimeUtils.ULongFromDateTime(DateTime.Now);
@@ -194,6 +212,8 @@ namespace Managers {
 			
 			wall.SetActive(false);
 		}
-	}
 
+		#endregion
+
+	}
 }
