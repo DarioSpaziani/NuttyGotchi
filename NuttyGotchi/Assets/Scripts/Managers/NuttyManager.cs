@@ -54,19 +54,10 @@ namespace Managers {
 		//it is a component built in framework of unity, work for the fade in and fade out of the panel
 		private CanvasGroup gameOverCanvasGroup;
 
-		private void Awake() {
-			elapsedSinceLastMeal = 0;
-			elapsedSinceLastSleep = 0;
-			elapsedSinceLastGame = 0;
-		}
-
 		private void Start() {
 			print("meal stats printed in Start : " + elapsedSinceLastMeal);
 		}
 
-		private void Update() {
-			
-		}
 
 		//load the stats, if there are yet in memory or create new ones with the relative event
 		public void Load() {

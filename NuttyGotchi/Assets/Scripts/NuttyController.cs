@@ -15,7 +15,7 @@ public class NuttyController : MonoBehaviour
 	private CanvasGroup welcomeCanvasGroup;
 
 	private void NiceToMeetYou() {
-		animator.SetBool("isDead", true);
+		animator.SetBool("isDead", false);
 		welcomeCanvasGroup = welcomePanel.GetComponent<CanvasGroup>();
 		StartCoroutine(FadeInOutPanel(0.01f));
 
